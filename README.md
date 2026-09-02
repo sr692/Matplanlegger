@@ -1,6 +1,6 @@
 # Matplanlegger v1.6
 
-Familieapp for ukesplan, middagsbank, fryserlager og butikk-uavhengig handleliste. Appen er laget for **matplanlegger.rusti.no** og bruker delte husholdningsprofiler uten vanlig innlogging.
+Familieapp for ukesplan, middagsbank, fryserlager og butikk-uavhengig handleliste. Appen er laget for **mat.rusti.no** og bruker delte husholdningsprofiler uten vanlig innlogging.
 
 Eksempel:
 - `Sebastian & Ida` har én profil og deler samme ukesplan, lager og handleliste.
