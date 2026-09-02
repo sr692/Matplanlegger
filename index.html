@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="no" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta id="themeColor" name="theme-color" content="#f4f1e8" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="description" content="Matplanlegger for husholdningen – ukesplan, middagsbank, fryser og handleliste på ett sted." />
+  <link rel="canonical" href="https://matplanlegger.rusti.no/" />
+  <title>Matplanlegger | rusti.no</title>
+  <script>
+    try {
+      document.documentElement.dataset.theme = localStorage.getItem('matplan_theme') === 'dark' ? 'dark' : 'light';
+    } catch (_) {}
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="https://matplanlegger.rusti.no/" aria-label="Matplanlegger på rusti.no">
+      <div class="brand-mark" aria-hidden="true">M</div>
+      <div class="brand-copy"><span class="brand-domain">RUSTI.NO</span><strong>Matplanlegger</strong></div>
+    </a>
+    <div class="profile-tools">
+      <button id="themeToggle" class="theme-toggle" type="button" aria-label="Bytt til mørk bakgrunn" title="Bytt tema">
+        <span id="themeIcon" class="theme-icon" aria-hidden="true">☾</span>
+        <span id="themeLabel">Mørk</span>
+      </button>
+      <button id="profileBtn" class="profile-chip" title="Bytt eller del profil">
+        <span class="profile-avatar">H</span>
+        <span><small>Husholdning</small><strong id="profileName">Ingen profil</strong></span>
+      </button>
+      <button id="syncBtn" class="ghost">Synkroniser</button>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section id="profileBanner" class="profile-banner hidden">
+      <div>
+        <p class="eyebrow">FØR DU STARTER</p>
+        <strong>Lag eller åpne en husholdningsprofil</strong>
+        <span>Profilen synker middagsplan, fryser og handleliste mellom mobilene deres.</span>
+      </div>
+      <button id="bannerProfileBtn" class="primary">Velg profil</button>
+    </section>
+
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">MATPLANLEGGER.RUSTI.NO</p>
+        <h1>Hva skal vi spise denne uka?</h1>
+        <p class="lead">Planlegg middager ut fra det dere faktisk pleier å spise, flytt dager med dra-og-slipp, trekk fra det som finnes i fryseren og få én samlet handleliste.</p>
+      </div>
+      <div class="hero-actions">
+        <button id="autoPlanBtn" class="primary">Foreslå uke</button>
+        <button id="clearWeekBtn" class="secondary">Tøm uke</button>
+      </div>
+    </section>
+
+    <nav class="tabs" aria-label="Navigasjon">
+      <button class="tab active" data-view="week">Ukesplan</button>
+      <button class="tab" data-view="shopping">Handleliste</button>
+      <button class="tab" data-view="meals">Middagsbank</button>
+      <button class="tab" data-view="freezer">Fryser</button>
+    </nav>
+
+    <section id="weekView" class="view active">
+      <div class="section-head">
+        <div><p class="eyebrow">DENNE UKEN</p><h2>Middagsplan</h2></div>
+        <div class="hint">Dra en middag til en annen dag · klikk for å endre</div>
+      </div>
+      <div id="weekGrid" class="week-grid"></div>
+    </section>
+
+    <section id="shoppingView" class="view">
+      <div class="section-head">
+        <div><p class="eyebrow">DET SOM MANGLER</p><h2>Handleliste</h2></div>
+        <button id="regenShoppingBtn" class="secondary">Oppdater fra uke</button>
+      </div>
+      <div class="notice">Handlelisten bygges automatisk fra valgte middager og trekker fra det dere allerede har registrert i fryseren.</div>
+      <div id="shoppingList" class="shopping-list"></div>
+    </section>
+
+    <section id="mealsView" class="view">
+      <div class="section-head">
+        <div><p class="eyebrow">DEFAULT + DERES EGNE</p><h2>Middagsbank</h2></div>
+        <div class="section-actions">
+          <input id="mealSearch" class="search" placeholder="Søk etter middag…" />
+          <button id="addMealBtn" class="primary" type="button">+ Legg til middag</button>
+        </div>
+      </div>
+      <div class="notice meal-bank-note">Default-middagene følger appen. Egne middager lagres kun i den aktive husholdningsprofilen og synkroniseres med de andre som bruker samme profil.</div>
+      <div id="mealFilters" class="filters"></div>
+      <div id="mealGrid" class="meal-grid"></div>
+    </section>
+
+    <section id="freezerView" class="view">
+      <div class="section-head">
+        <div><p class="eyebrow">LAGER</p><h2>Fryser</h2></div>
+        <button id="addFreezerBtn" class="secondary">Legg til vare</button>
+      </div>
+      <div id="freezerList" class="freezer-list"></div>
+    </section>
+
+    <section class="app-note">
+      <div class="app-note-icon" aria-hidden="true">↗</div>
+      <div>
+        <p class="eyebrow">DELT HUSHOLDNING</p>
+        <h2>Én plan. Én handleliste. Alle i sync.</h2>
+        <p>Del profillenken med de andre i husholdningen. Endringer i middagsplan, fryser og handleliste synkroniseres mellom enhetene.</p>
+      </div>
+      <span class="domain-pill">matplanlegger.rusti.no</span>
+    </section>
+    <div class="footer">© rusti.no · Matplanlegger</div>
+  </main>
+
+  <dialog id="profileDialog">
+    <div class="dialog-card profile-dialog">
+      <div class="dialog-head">
+        <div><p class="eyebrow">HUSHOLDNING</p><h3>Profiler</h3></div>
+        <button id="closeProfileDialog" class="icon-btn" type="button">×</button>
+      </div>
+      <p class="dialog-copy">Ingen innlogging. Lag én profil per husholdning og del profilkoden eller lenken med de som skal bruke den.</p>
+
+      <div id="currentProfileCard" class="current-profile hidden">
+        <div>
+          <span class="status-dot"></span>
+          <div><small>Aktiv profil</small><strong id="currentProfileName"></strong></div>
+        </div>
+        <button id="copyProfileLinkBtn" class="secondary" type="button">Kopier delingslenke</button>
+      </div>
+
+      <div class="profile-columns">
+        <form id="createProfileForm" class="profile-panel">
+          <p class="eyebrow">NY PROFIL</p>
+          <h4>Lag husholdning</h4>
+          <label>Navn<input name="name" required maxlength="80" placeholder="f.eks. Sebastian & Ida" /></label>
+          <button class="primary" type="submit">Lag profil</button>
+        </form>
+
+        <form id="joinProfileForm" class="profile-panel">
+          <p class="eyebrow">HAR DU EN KODE?</p>
+          <h4>Åpne eksisterende</h4>
+          <label>Profilkode eller delingslenke<input name="code" required autocomplete="off" placeholder="Lim inn kode eller lenke" /></label>
+          <button class="secondary" type="submit">Åpne profil</button>
+        </form>
+      </div>
+
+      <div id="savedProfilesWrap" class="saved-profiles-wrap hidden">
+        <p class="eyebrow">LAGRET PÅ DENNE ENHETEN</p>
+        <div id="savedProfiles" class="saved-profiles"></div>
+      </div>
+
+      <div class="profile-warning">Profilkoden fungerer som en nøkkel. Alle som har koden kan åpne og endre husholdningen. Ikke legg delingslenken offentlig.</div>
+    </div>
+  </dialog>
+
+  <dialog id="mealDialog">
+    <form method="dialog" class="dialog-card">
+      <div class="dialog-head"><div><p class="eyebrow">VELG MIDDAG</p><h3 id="dialogDay"></h3></div><button class="icon-btn" value="cancel">×</button></div>
+      <input id="dialogSearch" class="search" placeholder="Søk…" />
+      <div id="dialogMeals" class="dialog-meals"></div>
+    </form>
+  </dialog>
+
+  <dialog id="customMealDialog">
+    <form class="dialog-card custom-meal-dialog" id="customMealForm">
+      <div class="dialog-head"><div><p class="eyebrow">MIN PROFIL</p><h3 id="customMealDialogTitle">Legg til middag</h3></div><button id="closeCustomMealDialog" class="icon-btn" type="button">×</button></div>
+      <input type="hidden" name="id" />
+      <div class="form-grid">
+        <label>Navn<input name="name" required maxlength="120" placeholder="f.eks. Idas kyllingpasta" /></label>
+        <label>Kategori<input name="category" maxlength="50" list="mealCategorySuggestions" placeholder="f.eks. Kylling" /></label>
+      </div>
+      <datalist id="mealCategorySuggestions"><option value="Kylling"><option value="Fisk"><option value="Kjøtt"><option value="Pasta"><option value="Pizza"><option value="Tex-mex"><option value="Vegetar"><option value="Annet"></datalist>
+      <label>Ingredienser <span class="label-help">én per linje: vare | mengde</span><textarea name="ingredients" rows="7" placeholder="kyllingfilet | 600 g&#10;pasta | 1 pk&#10;matfløte | 1 beger"></textarea></label>
+      <label>Oppskriftslenke <span class="label-help">valgfritt</span><input name="url" type="url" inputmode="url" placeholder="https://…" /></label>
+      <div class="dialog-actions"><button id="cancelCustomMealBtn" class="secondary" type="button">Avbryt</button><button id="customMealSubmit" class="primary" type="submit">Legg til middag</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="freezerDialog">
+    <form method="dialog" class="dialog-card small" id="freezerForm">
+      <div class="dialog-head"><div><p class="eyebrow">NY VARE</p><h3>Legg til i fryseren</h3></div><button class="icon-btn" value="cancel">×</button></div>
+      <label>Vare<input name="name" required placeholder="f.eks. kyllingfilet" /></label>
+      <label>Mengde<input name="qty" required placeholder="f.eks. 600 g eller 2 pk" /></label>
+      <label>Plassering<select name="location"><option>Kjelleren</option><option>Boden</option></select></label>
+      <button class="primary" value="default">Lagre</button>
+    </form>
+  </dialog>
+
+  <script src="meals.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
