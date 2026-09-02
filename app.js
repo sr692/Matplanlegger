@@ -1,4 +1,4 @@
-const API_BASE = (window.MATPLAN_API || 'https://matplanlegger-api.sebastian-be1.workers.dev').replace(/\/$/, '');
+const API_BASE = (window.MATPLAN_API || '').replace(/\/$/, '');
 const DAYS = ['Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag','Søndag'];
 const seedWeek = {Onsdag:'liba-chorizo',Torsdag:'butter-chicken',Fredag:'pizza'};
 const seedFreezer = [

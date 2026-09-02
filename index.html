@@ -6,7 +6,7 @@
   <meta id="themeColor" name="theme-color" content="#f4f1e8" />
   <meta name="color-scheme" content="light dark" />
   <meta name="description" content="Matplanlegger for husholdningen – ukesplan, middagsbank, fryser og handleliste på ett sted." />
-  <link rel="canonical" href="https://matplanlegger.rusti.no/" />
+  <link rel="canonical" href="https://mat.rusti.no/" />
   <title>Matplanlegger | rusti.no</title>
   <script>
     try {
@@ -20,7 +20,7 @@
 </head>
 <body>
   <header class="topbar">
-    <a class="brand" href="https://matplanlegger.rusti.no/" aria-label="Matplanlegger på rusti.no">
+    <a class="brand" href="https://mat.rusti.no/" aria-label="Matplanlegger på rusti.no">
       <div class="brand-mark" aria-hidden="true">M</div>
       <div class="brand-copy"><span class="brand-domain">RUSTI.NO</span><strong>Matplanlegger</strong></div>
     </a>
@@ -49,7 +49,7 @@
 
     <section class="hero">
       <div class="hero-copy">
-        <p class="eyebrow">MATPLANLEGGER.RUSTI.NO</p>
+        <p class="eyebrow">MAT.RUSTI.NO</p>
         <h1>Hva skal vi spise denne uka?</h1>
         <p class="lead">Planlegg middager ut fra det dere faktisk pleier å spise, flytt dager med dra-og-slipp, trekk fra det som finnes i fryseren og få én samlet handleliste.</p>
       </div>
@@ -111,7 +111,7 @@
         <h2>Én plan. Én handleliste. Alle i sync.</h2>
         <p>Del profillenken med de andre i husholdningen. Endringer i middagsplan, fryser og handleliste synkroniseres mellom enhetene.</p>
       </div>
-      <span class="domain-pill">matplanlegger.rusti.no</span>
+      <span class="domain-pill">mat.rusti.no</span>
     </section>
     <div class="footer">© rusti.no · Matplanlegger</div>
   </main>
@@ -190,6 +190,9 @@
     </form>
   </dialog>
 
+  <script>
+    window.MATPLAN_API = 'https://matplanlegger-api.sebastian-be1.workers.dev';
+  </script>
   <script src="meals.js"></script>
   <script src="app.js"></script>
 </body>
