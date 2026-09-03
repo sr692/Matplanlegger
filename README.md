@@ -15,6 +15,7 @@ Eksempel:
 - Endringer som skjer mens en opplasting allerede pågår blir køet og sendt rett etterpå i stedet for å bli droppet.
 - Worker lagrer `updatedAt` med millisekundpresisjon for å oppdage raske endringer pålitelig.
 - Skjulte faner stopper polling for å unngå unødvendige Worker/D1-kall.
+- Lagt til hengelås for å kunne låse uka
 
 ## Tidligere funksjoner
 - Middagsbanken har nå **Default-middager + egne middager per husholdningsprofil**.
