@@ -25,9 +25,20 @@ let selectedDay = null;
 let filter = 'Alle';
 let syncTimer = null;
 let syncInFlight = false;
+let syncQueued = false;
+let pullInFlight = false;
+let pollTimer = null;
+let localDirty = false;
+let localRevision = 0;
+let lastRemoteUpdatedAt = null;
 let draggedDay = null;
 let pointerDrag = null;
 let lastDragEnd = 0;
+
+const SYNC_DEBOUNCE_MS = 80;
+const POLL_VISIBLE_MS = 500;
+let lastLocalActivityAt = Date.now();
+const syncChannel = 'BroadcastChannel' in window ? new BroadcastChannel('matplan-profile-sync-v1') : null;
 
 
 function applyTheme(theme, persist = true) {
@@ -95,51 +106,86 @@ function cacheProfile(profile, profileState) {
   setProfiles(profiles);
 }
 
-function setActiveProfile(profile, profileState) {
+function setActiveProfile(profile, profileState, remoteUpdatedAt = null) {
   activeProfile = {id: profile.id.toLowerCase(), name: profile.name};
   state = ensureStateShape(profileState);
+  lastRemoteUpdatedAt = remoteUpdatedAt || null;
+  localDirty = false;
   localStorage.setItem(STORAGE_ACTIVE, activeProfile.id);
   cacheProfile(activeProfile, state);
   updateProfileUI();
   renderAll();
+  startFastPolling();
 }
 
 function save({sync = true} = {}) {
   if (activeProfile) cacheProfile(activeProfile, state);
   else localStorage.setItem(LEGACY_STATE, JSON.stringify(state));
-  if (sync) scheduleSync();
+
+  if (sync && activeProfile) {
+    localDirty = true;
+    localRevision += 1;
+    lastLocalActivityAt = Date.now();
+    scheduleSync();
+  }
 }
 
-function scheduleSync() {
+function scheduleSync(delay = SYNC_DEBOUNCE_MS) {
   if (!activeProfile || !API_BASE) return;
   clearTimeout(syncTimer);
-  syncTimer = setTimeout(() => pushProfile(false), 650);
+  syncTimer = setTimeout(() => pushProfile(false), delay);
 }
 
 async function pushProfile(showFeedback = false) {
-  if (!activeProfile || !API_BASE || syncInFlight) {
+  if (!activeProfile || !API_BASE) {
     if (showFeedback && !API_BASE) alert('Worker-URL mangler. Appen lagrer bare lokalt til MATPLAN_API er konfigurert.');
     return;
   }
 
+  if (syncInFlight) {
+    syncQueued = true;
+    return;
+  }
+
+  clearTimeout(syncTimer);
+  syncTimer = null;
   syncInFlight = true;
+  syncQueued = false;
+  const profileId = activeProfile.id;
+  const revisionAtStart = localRevision;
+  const snapshot = structuredClone(state);
   setSyncStatus('Synker…');
+
   try {
-    const response = await fetch(`${API_BASE}/api/profiles/${activeProfile.id}`, {
+    const response = await fetch(`${API_BASE}/api/profiles/${profileId}`, {
       method: 'PUT',
       headers: {'content-type':'application/json'},
-      body: JSON.stringify({name: activeProfile.name, state})
+      body: JSON.stringify({name: activeProfile.name, state: snapshot})
     });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const result = await response.json();
+
+    if (activeProfile?.id === profileId) {
+      lastRemoteUpdatedAt = result.updatedAt || lastRemoteUpdatedAt;
+      if (localRevision === revisionAtStart) localDirty = false;
+      else syncQueued = true;
+    }
+
     setSyncStatus('Synkronisert');
+    syncChannel?.postMessage({type:'profile-synced', profileId, updatedAt:lastRemoteUpdatedAt});
     if (showFeedback) toast('Profilen er synkronisert');
   } catch (error) {
     console.error(error);
     setSyncStatus('Ikke synket');
+    syncQueued = false;
     if (showFeedback) alert('Kunne ikke synkronisere profilen. Endringene er fortsatt lagret på denne enheten.');
   } finally {
     syncInFlight = false;
-    setTimeout(() => setSyncStatus('Synkroniser'), 1800);
+    // Queue only edits that happened while a successful request was in flight.
+    // On failure we keep the local copy and retry gently instead of creating a request loop.
+    if (syncQueued) scheduleSync(0);
+    else if (localDirty && navigator.onLine) scheduleSync(5000);
+    else setTimeout(() => { if (!syncInFlight && !localDirty) setSyncStatus('Synkroniser'); }, 1200);
   }
 }
 
@@ -155,6 +201,90 @@ async function fetchProfile(profileId) {
   if (!response.ok) throw new Error(`HTTP_${response.status}`);
   return response.json();
 }
+
+async function pullProfile({force = false} = {}) {
+  if (!activeProfile || !API_BASE || pullInFlight) return false;
+  if (!force && (localDirty || syncInFlight)) return false;
+
+  const profileId = activeProfile.id;
+  pullInFlight = true;
+  try {
+    const remote = await fetchProfile(profileId);
+    if (activeProfile?.id !== profileId) return false;
+
+    const remoteUpdatedAt = remote.updatedAt || null;
+    const changed = !lastRemoteUpdatedAt || (remoteUpdatedAt && remoteUpdatedAt !== lastRemoteUpdatedAt);
+    if (!changed) return false;
+
+    // Never overwrite unsent local edits. They are pushed first, then the next poll checks again.
+    if (localDirty || syncInFlight) return false;
+
+    activeProfile = {id: remote.id.toLowerCase(), name: remote.name};
+    state = ensureStateShape(remote.state);
+    lastRemoteUpdatedAt = remoteUpdatedAt;
+    cacheProfile(activeProfile, state);
+    updateProfileUI();
+    renderAll();
+    setSyncStatus('Synkronisert');
+    return true;
+  } catch (error) {
+    if (force) console.error(error);
+    return false;
+  } finally {
+    pullInFlight = false;
+  }
+}
+
+function currentPollInterval() {
+  return POLL_VISIBLE_MS;
+}
+
+function startFastPolling() {
+  clearTimeout(pollTimer);
+  if (!activeProfile || !API_BASE || document.hidden) return;
+
+  const tick = async () => {
+    if (!activeProfile || !API_BASE || document.hidden) return;
+    await pullProfile();
+    pollTimer = setTimeout(tick, currentPollInterval());
+  };
+
+  pollTimer = setTimeout(tick, 150);
+}
+
+function requestImmediatePull() {
+  if (!activeProfile || !API_BASE || document.hidden) return;
+  clearTimeout(pollTimer);
+  pollProfileSoon();
+}
+
+function pollProfileSoon() {
+  pollTimer = setTimeout(async () => {
+    await pullProfile();
+    startFastPolling();
+  }, 50);
+}
+
+syncChannel?.addEventListener('message', event => {
+  if (event.data?.type !== 'profile-synced') return;
+  if (!activeProfile || event.data.profileId !== activeProfile.id) return;
+  if (event.data.updatedAt && event.data.updatedAt === lastRemoteUpdatedAt) return;
+  requestImmediatePull();
+});
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    clearTimeout(pollTimer);
+    if (localDirty && navigator.onLine) pushProfile(false);
+    return;
+  }
+  requestImmediatePull();
+});
+window.addEventListener('focus', requestImmediatePull);
+window.addEventListener('online', () => {
+  if (localDirty) scheduleSync(0);
+  requestImmediatePull();
+});
 
 function setSyncStatus(text) {
   const btn = document.getElementById('syncBtn');
@@ -203,7 +333,7 @@ function renderSavedProfiles() {
     row.onclick = async () => {
       try {
         const remote = await fetchProfile(profile.id);
-        setActiveProfile({id:remote.id,name:remote.name}, remote.state);
+        setActiveProfile({id:remote.id,name:remote.name}, remote.state, remote.updatedAt);
         closeProfileDialog();
       } catch {
         setActiveProfile({id:profile.id,name:profile.name}, profile.state);
@@ -717,7 +847,7 @@ document.getElementById('joinProfileForm').onsubmit = async e => {
   button.textContent = 'Åpner…';
   try {
     const remote = await fetchProfile(id);
-    setActiveProfile({id:remote.id,name:remote.name}, remote.state);
+    setActiveProfile({id:remote.id,name:remote.name}, remote.state, remote.updatedAt);
     e.currentTarget.reset();
     closeProfileDialog();
     toast(`Åpnet «${remote.name}»`);
@@ -747,7 +877,7 @@ async function bootstrap() {
   if (activeId) {
     try {
       const remote = await fetchProfile(activeId);
-      setActiveProfile({id:remote.id,name:remote.name}, remote.state);
+      setActiveProfile({id:remote.id,name:remote.name}, remote.state, remote.updatedAt);
       if (queryProfile) toast(`Synkronisert med «${remote.name}»`);
       return;
     } catch (error) {
