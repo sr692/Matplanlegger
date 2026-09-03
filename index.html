@@ -69,7 +69,13 @@
     <section id="weekView" class="view active">
       <div class="section-head">
         <div><p class="eyebrow">DENNE UKEN</p><h2>Middagsplan</h2></div>
-        <div class="hint">Dra en middag til en annen dag · klikk for å endre</div>
+        <div class="week-head-actions">
+          <button id="weekLockBtn" class="week-lock" type="button" aria-pressed="false" aria-label="Lås middagsplanen" title="Lås uka">
+            <span id="weekLockIcon" class="week-lock-icon" aria-hidden="true">&#128275;</span>
+            <span id="weekLockLabel">Lås uke</span>
+          </button>
+          <div id="weekHint" class="hint">Dra en middag til en annen dag · klikk for å endre</div>
+        </div>
       </div>
       <div id="weekGrid" class="week-grid"></div>
     </section>

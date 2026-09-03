@@ -72,7 +72,8 @@ function defaultState(withSeed = false) {
     freezer: withSeed ? structuredClone(seedFreezer) : [],
     shoppingDone: {},
     history: {},
-    customMeals: []
+    customMeals: [],
+    weekLocked: false
   };
 }
 
@@ -82,7 +83,8 @@ function ensureStateShape(value) {
     freezer: Array.isArray(value?.freezer) ? value.freezer : [],
     shoppingDone: value?.shoppingDone && typeof value.shoppingDone === 'object' ? value.shoppingDone : {},
     history: value?.history && typeof value.history === 'object' ? value.history : {},
-    customMeals: Array.isArray(value?.customMeals) ? value.customMeals : []
+    customMeals: Array.isArray(value?.customMeals) ? value.customMeals : [],
+    weekLocked: value?.weekLocked === true
   };
 }
 
@@ -440,6 +442,55 @@ function requireProfileForCustomMeal() {
 }
 
 
+function isWeekLocked() {
+  return state.weekLocked === true;
+}
+
+function updateWeekLockUI() {
+  const locked = isWeekLocked();
+  const button = document.getElementById('weekLockBtn');
+  const icon = document.getElementById('weekLockIcon');
+  const label = document.getElementById('weekLockLabel');
+  const hint = document.getElementById('weekHint');
+  const autoPlan = document.getElementById('autoPlanBtn');
+  const clearWeek = document.getElementById('clearWeekBtn');
+
+  if (button) {
+    button.classList.toggle('locked', locked);
+    button.setAttribute('aria-pressed', String(locked));
+    button.setAttribute('aria-label', locked ? 'Lås opp middagsplanen' : 'Lås middagsplanen');
+    button.title = activeProfile
+      ? (locked ? 'Lås opp uka for å endre middagsplanen' : 'Lås uka for å unngå utilsiktede endringer')
+      : 'Velg en profil for å låse uka';
+  }
+  if (icon) icon.innerHTML = locked ? '&#128274;' : '&#128275;';
+  if (label) label.textContent = locked ? 'Uka er låst' : 'Lås uke';
+  if (hint) hint.textContent = locked
+    ? 'Middagsplanen er låst mot endringer'
+    : 'Dra en middag til en annen dag · klikk for å endre';
+
+  if (autoPlan) {
+    autoPlan.disabled = locked;
+    autoPlan.title = locked ? 'Lås opp uka for å foreslå ny uke' : '';
+  }
+  if (clearWeek) {
+    clearWeek.disabled = locked;
+    clearWeek.title = locked ? 'Lås opp uka for å tømme planen' : '';
+  }
+}
+
+function toggleWeekLock() {
+  if (!activeProfile) {
+    openProfileDialog();
+    toast('Velg en husholdningsprofil først');
+    return;
+  }
+  state.weekLocked = !isWeekLocked();
+  save();
+  renderWeek();
+  toast(state.weekLocked ? 'Uka er låst' : 'Uka er låst opp');
+}
+
 function switchView(name) {
   document.querySelectorAll('.view').forEach(x => x.classList.remove('active'));
   document.getElementById(name+'View').classList.add('active');
@@ -450,6 +501,7 @@ function switchView(name) {
 document.querySelectorAll('.tab').forEach(b => b.onclick = () => switchView(b.dataset.view));
 
 function moveMealBetweenDays(fromDay, toDay) {
+  if (isWeekLocked()) { toast('Uka er låst'); return; }
   if (!fromDay || !toDay || fromDay === toDay) return;
   const fromMeal = state.week[fromDay];
   if (!fromMeal) return;
@@ -473,7 +525,7 @@ function clearDropTargets() {
 }
 
 function beginPointerDrag(e, day, card, meal) {
-  if (!meal || e.button > 0) return;
+  if (isWeekLocked() || !meal || e.button > 0) return;
   e.stopPropagation();
   pointerDrag = {
     pointerId: e.pointerId,
@@ -533,25 +585,31 @@ function endPointerDrag(e) {
 
 function renderWeek() {
   const el = document.getElementById('weekGrid');
+  const locked = isWeekLocked();
+  updateWeekLockUI();
+  el.classList.toggle('week-locked', locked);
   el.innerHTML = '';
   DAYS.forEach(day => {
     const meal = mealById(state.week[day]);
     const c = document.createElement('article');
     c.className = 'day-card';
     c.dataset.day = day;
-    c.draggable = !!meal;
-    c.setAttribute('aria-label', meal ? `${day}: ${meal.name}. Dra for å flytte eller klikk for å endre.` : `${day}: ingen middag. Klikk for å velge.`);
-    c.innerHTML = `<div class="day-top"><div class="day-name">${day}</div>${meal ? `<button class="drag-handle" type="button" aria-label="Dra ${escapeHtml(meal.name)} fra ${day}" title="Dra til en annen dag">⠿</button>` : ''}</div>${meal ? `<div class="day-meal">${escapeHtml(meal.name)}</div><div class="day-meta">${escapeHtml(meal.category)}</div><div class="day-tags">${(meal.tags || []).map(t=>`<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>` : `<div class="day-empty">+ Velg middag</div>`}`;
+    c.draggable = !!meal && !locked;
+    c.setAttribute('aria-label', locked
+      ? `${day}: ${meal ? meal.name : 'ingen middag'}. Uka er låst.`
+      : (meal ? `${day}: ${meal.name}. Dra for å flytte eller klikk for å endre.` : `${day}: ingen middag. Klikk for å velge.`));
+    c.innerHTML = `<div class="day-top"><div class="day-name">${day}</div>${meal && !locked ? `<button class="drag-handle" type="button" aria-label="Dra ${escapeHtml(meal.name)} fra ${day}" title="Dra til en annen dag">⠿</button>` : (locked ? '<span class="day-lock" aria-hidden="true">&#128274;</span>' : '')}</div>${meal ? `<div class="day-meal">${escapeHtml(meal.name)}</div><div class="day-meta">${escapeHtml(meal.category)}</div><div class="day-tags">${(meal.tags || []).map(t=>`<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>` : `<div class="day-empty">${locked ? 'Ingen middag' : '+ Velg middag'}</div>`}`;
 
     c.onclick = e => {
       if (e.target.closest('.drag-handle')) return;
       if (Date.now() - lastDragEnd < 350) return;
+      if (locked) { toast('Uka er låst'); return; }
       openMealDialog(day);
     };
 
     // Desktop drag-and-drop.
     c.addEventListener('dragstart', e => {
-      if (!meal || e.target.closest?.('.drag-handle')) { e.preventDefault(); return; }
+      if (locked || !meal || e.target.closest?.('.drag-handle')) { e.preventDefault(); return; }
       draggedDay = day;
       c.classList.add('dragging');
       e.dataTransfer.effectAllowed = 'move';
@@ -593,6 +651,7 @@ function renderWeek() {
 }
 
 function openMealDialog(day) {
+  if (isWeekLocked()) { toast('Uka er låst'); return; }
   selectedDay = day;
   document.getElementById('dialogDay').textContent = day;
   document.getElementById('dialogSearch').value = '';
@@ -610,6 +669,11 @@ function renderDialogMeals() {
     b.className = 'dialog-meal';
     b.innerHTML = `<strong>${escapeHtml(m.name)}</strong><span>${escapeHtml(m.category)}${m.isCustom ? ' · Egen' : ''}${m.tags?.length ? ` · ${m.tags.map(escapeHtml).join(' · ')}` : ''}</span>`;
     b.onclick = () => {
+      if (isWeekLocked()) {
+        document.getElementById('mealDialog').close();
+        toast('Uka er låst');
+        return;
+      }
       state.week[selectedDay] = m.id;
       state.history[m.id] = (state.history[m.id] || 0) + 1;
       save();
@@ -678,6 +742,10 @@ function openCustomMealDialog(mealId = null) {
 function deleteCustomMeal(mealId) {
   const meal = (state.customMeals || []).find(m => m.id === mealId);
   if (!meal) return;
+  if (isWeekLocked() && Object.values(state.week).includes(mealId)) {
+    toast('Lås opp uka før du sletter en middag som er i planen');
+    return;
+  }
   if (!confirm(`Slette «${meal.name}» fra denne profilen?`)) return;
   state.customMeals = state.customMeals.filter(m => m.id !== mealId);
   DAYS.forEach(day => { if (state.week[day] === mealId) delete state.week[day]; });
@@ -781,8 +849,13 @@ document.getElementById('freezerForm').onsubmit = e => {
   document.getElementById('freezerDialog').close();
 };
 
-document.getElementById('clearWeekBtn').onclick = () => { state.week = {}; state.shoppingDone = {}; save(); renderWeek(); };
+document.getElementById('weekLockBtn').onclick = toggleWeekLock;
+document.getElementById('clearWeekBtn').onclick = () => {
+  if (isWeekLocked()) { toast('Uka er låst'); return; }
+  state.week = {}; state.shoppingDone = {}; save(); renderWeek();
+};
 document.getElementById('autoPlanBtn').onclick = () => {
+  if (isWeekLocked()) { toast('Uka er låst'); return; }
   const used = new Set();
   const weighted = allMeals().sort((a,b) => (state.history[b.id]||0) - (state.history[a.id]||0));
   if (!weighted.length) return;
