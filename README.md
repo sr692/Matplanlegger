@@ -1,4 +1,4 @@
-# Matplanlegger v1.8
+# Matplanlegger v1.10
 
 Familieapp for ukesplan, middagsbank, fryserlager og butikk-uavhengig handleliste. Appen er laget for **mat.rusti.no** og bruker delte husholdningsprofiler uten vanlig innlogging.
 
@@ -6,6 +6,13 @@ Eksempel:
 - `Sebastian & Ida` har én profil og deler samme ukesplan, lager og handleliste.
 - `Mamma & Pappa` har en annen profil med helt separat data.
 - Samme enhet kan huske flere profiler og bytte mellom dem.
+
+
+## Nytt i v1.10 - cache-busting
+- `styles.css`, `meals.js` og `app.js` lastes med versjonsparameter `?v=1.10.0`.
+- Dette tvinger nettleseren til å hente nye frontend-assets ved versjonsbytte i stedet for å bruke en gammel CSS/JS-cache.
+- `index.html` har også eksplisitte no-cache meta-direktiver og en `app-version`-markør.
+- Ved neste release skal versjonsparameteren økes, for eksempel til `?v=1.11.0`.
 
 ## Nytt i v1.8
 - Nær sanntids profilsynk: lokale endringer pushes etter ca. **80 ms**.
@@ -15,7 +22,6 @@ Eksempel:
 - Endringer som skjer mens en opplasting allerede pågår blir køet og sendt rett etterpå i stedet for å bli droppet.
 - Worker lagrer `updatedAt` med millisekundpresisjon for å oppdage raske endringer pålitelig.
 - Skjulte faner stopper polling for å unngå unødvendige Worker/D1-kall.
-- Lagt til hengelås for å kunne låse uka
 
 ## Tidligere funksjoner
 - Middagsbanken har nå **Default-middager + egne middager per husholdningsprofil**.
@@ -75,8 +81,8 @@ Worker-URL-en er allerede lagt inn før `app.js` i `index.html`:
 <script>
   window.MATPLAN_API = 'https://matplanlegger-api.sebastian-be1.workers.dev';
 </script>
-<script src="meals.js"></script>
-<script src="app.js"></script>
+<script src="meals.js?v=1.10.0"></script>
+<script src="app.js?v=1.10.0"></script>
 ```
 
 Hvis `MATPLAN_API` ikke er satt, fungerer appen lokalt, men profiler kan ikke synkroniseres mellom enheter.
@@ -112,3 +118,11 @@ Dette er fortsatt **last write wins**, men synkvinduet er gjort svært kort. En 
 Middagsbanken består av en innebygd Default-bank og egne middager per husholdningsprofil. Egne middager lagres i `state.customMeals` og synkroniseres dermed automatisk i samme Cloudflare/D1-profilpayload som ukeplan, fryser og handleliste. Default-middagene ligger fortsatt i `meals.js` og endres ikke av brukerne.
 
 I appen kan brukeren legge til, redigere og slette egne middager. Ingredienser skrives én per linje som `vare | mengde`, og brukes automatisk i handlelisten når middagen velges i ukeplanen.
+
+
+## v1.9 - Ukelås
+
+- Middagsplanen kan låses per husholdningsprofil med ett trykk.
+- Låst uke blokkerer Foreslå uke, Tøm uke, dra-og-slipp og manuell endring av dagene.
+- Låsestatus lagres og synkroniseres som en del av profilen.
+- Handleliste, fryser og middagsbank kan fortsatt brukes mens uka er låst.
