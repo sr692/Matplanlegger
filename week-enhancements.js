@@ -52,12 +52,20 @@
   }
 
   function markTodayCard(card) {
+    const shouldBeToday = card.dataset.day === getTodayInternalDay();
     const existingBadge = card.querySelector('.week-today-badge');
-    if (existingBadge) existingBadge.remove();
-    card.classList.remove('is-today');
 
-    if (card.dataset.day !== getTodayInternalDay()) return;
-    card.classList.add('is-today');
+    card.classList.toggle('is-today', shouldBeToday);
+
+    if (!shouldBeToday) {
+      existingBadge?.remove();
+      return;
+    }
+
+    if (existingBadge) {
+      existingBadge.textContent = strings().today;
+      return;
+    }
 
     const dayTop = card.querySelector('.day-top');
     if (!dayTop) return;
@@ -71,21 +79,31 @@
   function addRecipeAction(card) {
     if (!card) return;
 
-    const old = card.querySelector('.week-recipe-btn');
-    if (old) old.remove();
-
     const day = card.dataset.day;
     const meal = mealForDay(day);
     const url = safeUrl(meal?.url);
-    if (!url) return;
+    const existing = card.querySelector('.week-recipe-btn');
+
+    if (!url) {
+      existing?.remove();
+      return;
+    }
+
+    const copy = strings();
+    if (existing) {
+      if (existing.href !== url) existing.href = url;
+      if (existing.textContent !== copy.openRecipe) existing.textContent = copy.openRecipe;
+      existing.setAttribute('aria-label', copy.openRecipeAria);
+      return;
+    }
 
     const action = document.createElement('a');
     action.className = 'week-recipe-btn';
     action.href = url;
     action.target = '_blank';
     action.rel = 'noopener noreferrer';
-    action.textContent = strings().openRecipe;
-    action.setAttribute('aria-label', strings().openRecipeAria);
+    action.textContent = copy.openRecipe;
+    action.setAttribute('aria-label', copy.openRecipeAria);
     action.addEventListener('click', event => event.stopPropagation());
     action.addEventListener('pointerdown', event => event.stopPropagation());
 
@@ -234,7 +252,11 @@
   }
 
   function onFullscreenChange() {
-    if (!fullscreenElement()) fullscreenRequestedByApp = false;
+    if (!fullscreenElement() && fullscreenRequestedByApp) {
+      fullscreenRequestedByApp = false;
+      presentationActive = false;
+      document.body.classList.remove(PRESENTATION_CLASS);
+    }
     updatePresentationButton();
   }
 
@@ -247,7 +269,14 @@
 
   const weekGrid = document.getElementById('weekGrid');
   if (weekGrid) {
-    new MutationObserver(() => queueMicrotask(enhanceWeekCards)).observe(weekGrid, {childList: true, subtree: true});
+    let enhanceFrame = 0;
+    const observer = new MutationObserver(() => {
+      cancelAnimationFrame(enhanceFrame);
+      enhanceFrame = requestAnimationFrame(enhanceWeekCards);
+    });
+    // renderWeek() replaces the day cards as direct children of #weekGrid.
+    // Watching only that level prevents our own badge/button updates from retriggering the observer.
+    observer.observe(weekGrid, {childList: true});
   }
 
   document.addEventListener('visibilitychange', () => {
