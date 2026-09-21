@@ -5,6 +5,20 @@
   let presentationActive = false;
   let fullscreenRequestedByApp = false;
 
+  function strings() {
+    const lang = (document.documentElement.lang || 'no').toLowerCase();
+    const en = lang.startsWith('en');
+    return {
+      openRecipe: en ? 'Open recipe ↗' : 'Åpne oppskrift ↗',
+      openRecipeAria: en ? 'Open recipe' : 'Åpne oppskrift',
+      fullscreen: en ? 'Fullscreen' : 'Fullskjerm',
+      exitFullscreen: en ? 'Exit fullscreen' : 'Avslutt fullskjerm',
+      fullscreenTitle: en ? 'Show the meal plan in fullscreen' : 'Vis middagsplanen i fullskjerm',
+      exitFullscreenTitle: en ? 'Exit fullscreen' : 'Avslutt fullskjerm',
+      today: en ? 'Today' : 'I dag'
+    };
+  }
+
   function fullscreenElement() {
     return document.fullscreenElement || document.webkitFullscreenElement || null;
   }
@@ -32,9 +46,33 @@
     }
   }
 
+  function getTodayInternalDay() {
+    const days = ['Søndag', 'Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lørdag'];
+    return days[new Date().getDay()];
+  }
+
+  function markTodayCard(card) {
+    const existingBadge = card.querySelector('.week-today-badge');
+    if (existingBadge) existingBadge.remove();
+    card.classList.remove('is-today');
+
+    if (card.dataset.day !== getTodayInternalDay()) return;
+    card.classList.add('is-today');
+
+    const dayTop = card.querySelector('.day-top');
+    if (!dayTop) return;
+
+    const badge = document.createElement('span');
+    badge.className = 'week-today-badge';
+    badge.textContent = strings().today;
+    dayTop.appendChild(badge);
+  }
+
   function addRecipeAction(card) {
-    if (!card || card.dataset.recipeEnhanced === '1') return;
-    card.dataset.recipeEnhanced = '1';
+    if (!card) return;
+
+    const old = card.querySelector('.week-recipe-btn');
+    if (old) old.remove();
 
     const day = card.dataset.day;
     const meal = mealForDay(day);
@@ -46,8 +84,8 @@
     action.href = url;
     action.target = '_blank';
     action.rel = 'noopener noreferrer';
-    action.textContent = 'Åpne oppskrift ↗';
-    action.setAttribute('aria-label', 'Åpne oppskrift');
+    action.textContent = strings().openRecipe;
+    action.setAttribute('aria-label', strings().openRecipeAria);
     action.addEventListener('click', event => event.stopPropagation());
     action.addEventListener('pointerdown', event => event.stopPropagation());
 
@@ -55,7 +93,10 @@
   }
 
   function enhanceWeekCards() {
-    document.querySelectorAll('#weekGrid .day-card').forEach(addRecipeAction);
+    document.querySelectorAll('#weekGrid .day-card').forEach(card => {
+      markTodayCard(card);
+      addRecipeAction(card);
+    });
   }
 
   function ensureStyles() {
@@ -69,6 +110,8 @@
       .week-recipe-btn:hover{transform:translateY(-1px);border-color:currentColor}
       .week-recipe-btn:focus-visible{outline:2px solid currentColor;outline-offset:2px}
       .day-card:has(.week-recipe-btn) .day-tags{margin-bottom:.65rem}
+      .week-today-badge{display:inline-flex;align-items:center;justify-content:center;margin-left:auto;padding:.28rem .55rem;border-radius:999px;background:color-mix(in srgb,var(--accent,#c08b43) 16%,white);color:var(--text,#2e2a24);font-size:.68rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;border:1px solid color-mix(in srgb,var(--accent,#c08b43) 30%,transparent)}
+      #weekGrid .day-card.is-today:not(.drop-target){border-color:color-mix(in srgb,var(--accent,#c08b43) 42%, var(--line,#d9d5ca));box-shadow:0 10px 24px rgba(0,0,0,.08)}
 
       body.${PRESENTATION_CLASS}{overflow:hidden}
       body.${PRESENTATION_CLASS} .topbar,
@@ -81,30 +124,42 @@
       body.${PRESENTATION_CLASS} .app-note,
       body.${PRESENTATION_CLASS} .footer{display:none!important}
       body.${PRESENTATION_CLASS} .shell{width:100%;max-width:none;margin:0;padding:0;min-height:100dvh}
-      body.${PRESENTATION_CLASS} #weekView{display:flex!important;flex-direction:column;box-sizing:border-box;width:100%;height:100dvh;min-height:100vh;margin:0;padding:clamp(16px,2vw,32px);overflow:hidden}
-      body.${PRESENTATION_CLASS} #weekView .section-head{flex:0 0 auto;margin:0 0 clamp(12px,1.5vw,24px);align-items:center}
-      body.${PRESENTATION_CLASS} #weekView .section-head h2{font-size:clamp(1.7rem,2.5vw,3rem)}
+      body.${PRESENTATION_CLASS} #weekView{display:flex!important;flex-direction:column;align-items:center;justify-content:center;box-sizing:border-box;width:100%;min-height:100dvh;margin:0;padding:clamp(20px,3vw,36px);overflow:hidden;gap:clamp(14px,1.6vw,24px)}
+      body.${PRESENTATION_CLASS} #weekView .section-head{width:min(92vw,1560px);max-width:1560px;flex:0 0 auto;margin:0;align-items:center;gap:18px}
+      body.${PRESENTATION_CLASS} #weekView .section-head h2{font-size:clamp(1.6rem,2.25vw,2.45rem)}
+      body.${PRESENTATION_CLASS} #weekView .section-head .eyebrow{margin-bottom:.35rem}
+      body.${PRESENTATION_CLASS} #weekView .week-head-actions{flex-wrap:wrap;justify-content:flex-end;gap:10px}
       body.${PRESENTATION_CLASS} #weekView .hint{display:none}
-      body.${PRESENTATION_CLASS} #weekGrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));grid-template-rows:minmax(0,1fr);gap:clamp(8px,1vw,16px);flex:1 1 auto;min-height:0;overflow:hidden}
-      body.${PRESENTATION_CLASS} #weekGrid .day-card{box-sizing:border-box;min-width:0;min-height:0;height:100%;padding:clamp(12px,1.2vw,22px);overflow:hidden;display:flex;flex-direction:column}
-      body.${PRESENTATION_CLASS} #weekGrid .day-name{font-size:clamp(.78rem,1vw,1rem)}
-      body.${PRESENTATION_CLASS} #weekGrid .day-meal{font-size:clamp(1rem,1.55vw,1.65rem);line-height:1.15;margin-top:clamp(12px,1.5vw,24px)}
-      body.${PRESENTATION_CLASS} #weekGrid .day-meta{font-size:clamp(.72rem,.9vw,.95rem)}
-      body.${PRESENTATION_CLASS} #weekGrid .tag{font-size:clamp(.62rem,.72vw,.78rem)}
-      body.${PRESENTATION_CLASS} #weekGrid .week-recipe-btn{margin-top:auto;font-size:clamp(.68rem,.78vw,.82rem)}
-      body.${PRESENTATION_CLASS} #weekGrid .day-empty{font-size:clamp(.9rem,1.2vw,1.25rem)}
+      body.${PRESENTATION_CLASS} #weekGrid{display:flex;flex-wrap:wrap;justify-content:center;align-items:stretch;align-content:center;gap:clamp(12px,1.2vw,18px);width:min(92vw,1560px);max-width:1560px;overflow:visible}
+      body.${PRESENTATION_CLASS} #weekGrid .day-card{box-sizing:border-box;display:flex;flex-direction:column;flex:1 1 180px;min-width:168px;max-width:210px;min-height:240px;padding:clamp(14px,1.15vw,18px);border-radius:20px;overflow:hidden;background:var(--surface,#fff);box-shadow:0 12px 28px rgba(0,0,0,.06)}
+      body.${PRESENTATION_CLASS} #weekGrid .day-card.is-today{flex-basis:230px;max-width:260px;transform:translateY(-5px);background:color-mix(in srgb,var(--surface,#fff) 85%, var(--accent,#c08b43) 15%);box-shadow:0 18px 36px rgba(0,0,0,.12)}
+      body.${PRESENTATION_CLASS} #weekGrid .day-top{gap:8px;align-items:flex-start}
+      body.${PRESENTATION_CLASS} #weekGrid .day-name{font-size:clamp(.74rem,.84vw,.88rem);letter-spacing:.12em}
+      body.${PRESENTATION_CLASS} #weekGrid .day-meal{font-size:clamp(1rem,1.2vw,1.24rem);line-height:1.18;margin-top:clamp(8px,1vw,14px);display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+      body.${PRESENTATION_CLASS} #weekGrid .is-today .day-meal{font-size:clamp(1.05rem,1.35vw,1.4rem);-webkit-line-clamp:5}
+      body.${PRESENTATION_CLASS} #weekGrid .day-meta{font-size:clamp(.74rem,.82vw,.84rem)}
+      body.${PRESENTATION_CLASS} #weekGrid .day-tags{display:flex;flex-wrap:wrap;gap:6px;min-height:28px;overflow:hidden}
+      body.${PRESENTATION_CLASS} #weekGrid .tag{font-size:clamp(.62rem,.72vw,.74rem)}
+      body.${PRESENTATION_CLASS} #weekGrid .week-recipe-btn{margin-top:auto;font-size:clamp(.7rem,.78vw,.8rem)}
+      body.${PRESENTATION_CLASS} #weekGrid .day-empty{font-size:clamp(.9rem,1vw,1rem);margin-top:clamp(14px,2vw,22px)}
+      body.${PRESENTATION_CLASS} #weekGrid .day-lock,
+      body.${PRESENTATION_CLASS} #weekGrid .drag-handle{display:none!important}
 
-      @media(max-width:1000px){
-        body.${PRESENTATION_CLASS} #weekView{overflow:auto}
-        body.${PRESENTATION_CLASS} #weekGrid{grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));overflow:visible}
-        body.${PRESENTATION_CLASS} #weekGrid .day-card{min-height:0}
-        body.${PRESENTATION_CLASS} #weekGrid .day-meal{font-size:clamp(1rem,2.15vw,1.35rem)}
-      }
-      @media(max-width:620px){
+      @media (max-width:1100px){
         body.${PRESENTATION_CLASS}{overflow:auto}
-        body.${PRESENTATION_CLASS} #weekView{height:auto;min-height:100dvh;overflow:visible}
-        body.${PRESENTATION_CLASS} #weekGrid{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:none;flex:none}
-        body.${PRESENTATION_CLASS} #weekGrid .day-card{min-height:190px}
+        body.${PRESENTATION_CLASS} #weekView{justify-content:flex-start;min-height:100dvh;overflow:auto}
+        body.${PRESENTATION_CLASS} #weekView .section-head{width:min(94vw,1100px)}
+        body.${PRESENTATION_CLASS} #weekGrid{width:min(94vw,1100px)}
+        body.${PRESENTATION_CLASS} #weekGrid .day-card{flex:1 1 210px;max-width:none;min-height:220px}
+        body.${PRESENTATION_CLASS} #weekGrid .day-card.is-today{flex-basis:calc(50% - 10px);max-width:none}
+      }
+      @media (max-width:700px){
+        body.${PRESENTATION_CLASS} #weekView{padding:16px 14px 22px}
+        body.${PRESENTATION_CLASS} #weekView .section-head{width:100%;align-items:flex-start}
+        body.${PRESENTATION_CLASS} #weekView .week-head-actions{justify-content:flex-start}
+        body.${PRESENTATION_CLASS} #weekGrid{width:100%;gap:12px}
+        body.${PRESENTATION_CLASS} #weekGrid .day-card,
+        body.${PRESENTATION_CLASS} #weekGrid .day-card.is-today{flex:1 1 calc(50% - 12px);min-width:0;max-width:none;transform:none}
       }
     `;
     document.head.appendChild(style);
@@ -116,18 +171,19 @@
     const label = button.querySelector('.week-display-label');
     const icon = button.querySelector('.week-display-icon');
     const active = presentationActive || !!fullscreenElement();
-    if (label) label.textContent = active ? 'Avslutt fullskjerm' : 'Fullskjerm';
+    const copy = strings();
+    if (label) label.textContent = active ? copy.exitFullscreen : copy.fullscreen;
     if (icon) icon.textContent = active ? '×' : '⛶';
     button.setAttribute('aria-pressed', String(active));
-    button.setAttribute('aria-label', active ? 'Avslutt fullskjerm' : 'Vis middagsplanen i fullskjerm');
-    button.title = active ? 'Avslutt fullskjerm' : 'Vis middagsplanen i fullskjerm';
+    button.setAttribute('aria-label', active ? copy.exitFullscreenTitle : copy.fullscreenTitle);
+    button.title = active ? copy.exitFullscreenTitle : copy.fullscreenTitle;
   }
 
   async function enterPresentation() {
     presentationActive = true;
     document.body.classList.add(PRESENTATION_CLASS);
     updatePresentationButton();
-    window.scrollTo({top: 0, left: 0, behavior: 'instant'});
+    window.scrollTo(0, 0);
 
     if (!fullscreenElement()) {
       const request = document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen;
@@ -138,7 +194,6 @@
           catch { await request.call(document.documentElement); }
         } catch {
           fullscreenRequestedByApp = false;
-          // CSS presentation mode remains active as a fallback (notably useful on tablets/TV browsers).
         }
       }
     }
@@ -171,7 +226,7 @@
     button.className = 'week-lock week-display-btn';
     button.type = 'button';
     button.setAttribute('aria-pressed', 'false');
-    button.innerHTML = '<span class="week-display-icon" aria-hidden="true">⛶</span><span class="week-display-label">Fullskjerm</span>';
+    button.innerHTML = '<span class="week-display-icon" aria-hidden="true">⛶</span><span class="week-display-label"></span>';
     button.addEventListener('click', togglePresentation);
 
     actions.insertBefore(button, actions.firstChild);
@@ -179,13 +234,10 @@
   }
 
   function onFullscreenChange() {
-    if (!fullscreenElement() && fullscreenRequestedByApp) {
-      fullscreenRequestedByApp = false;
-      presentationActive = false;
-      document.body.classList.remove(PRESENTATION_CLASS);
-    }
+    if (!fullscreenElement()) fullscreenRequestedByApp = false;
     updatePresentationButton();
   }
+
   document.addEventListener('fullscreenchange', onFullscreenChange);
   document.addEventListener('webkitfullscreenchange', onFullscreenChange);
 
@@ -197,6 +249,10 @@
   if (weekGrid) {
     new MutationObserver(() => queueMicrotask(enhanceWeekCards)).observe(weekGrid, {childList: true, subtree: true});
   }
+
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) queueMicrotask(enhanceWeekCards);
+  });
 
   ensureStyles();
   installPresentationButton();
