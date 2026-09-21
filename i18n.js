@@ -125,6 +125,7 @@
     'Åpne oppskrift': 'Open recipe',
     'Fullskjerm': 'Fullscreen',
     'Avslutt fullskjerm': 'Exit fullscreen',
+    'I dag': 'Today',
     'Vis middagsplanen i fullskjerm': 'Show the meal plan in fullscreen',
     'Rediger': 'Edit',
     'Slett': 'Delete',

@@ -283,6 +283,13 @@
     if (!document.hidden) queueMicrotask(enhanceWeekCards);
   });
 
+  window.addEventListener('matplan:languagechange', () => {
+    requestAnimationFrame(() => {
+      enhanceWeekCards();
+      updatePresentationButton();
+    });
+  });
+
   ensureStyles();
   installPresentationButton();
   enhanceWeekCards();
