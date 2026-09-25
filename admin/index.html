@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="no" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="robots" content="noindex,nofollow,noarchive" />
+  <meta name="theme-color" content="#f4f1e8" />
+  <meta name="color-scheme" content="light dark" />
+  <title>Admin | Matplanlegger</title>
+  <script>
+    try {
+      document.documentElement.dataset.theme = localStorage.getItem('matplan_theme') === 'dark' ? 'dark' : 'light';
+    } catch (_) {}
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../styles.css?v=1.13.0" />
+  <link rel="stylesheet" href="./admin.css?v=1.13.0" />
+</head>
+<body>
+  <header class="topbar admin-topbar">
+    <a class="brand" href="../" aria-label="Tilbake til Matplanlegger">
+      <div class="brand-mark" aria-hidden="true">M</div>
+      <div class="brand-copy"><span class="brand-domain">RUSTI.NO</span><strong>Matplanlegger Admin</strong></div>
+    </a>
+    <div class="admin-header-actions">
+      <span id="adminIdentity" class="admin-identity hidden"></span>
+      <button id="logoutBtn" class="ghost hidden" type="button">Logg ut</button>
+    </div>
+  </header>
+
+  <main class="shell admin-shell">
+    <section class="hero admin-hero">
+      <div class="hero-copy">
+        <p class="eyebrow">ADMIN</p>
+        <h1>Standardmiddager for alle profiler</h1>
+        <p class="lead">Middager du legger til her blir en del av Default-banken for alle husholdningsprofiler. Profilenes egne middager endres ikke.</p>
+      </div>
+      <a class="secondary admin-back" href="../">Til Matplanlegger</a>
+    </section>
+
+    <section id="loginPanel" class="admin-panel login-panel">
+      <div class="admin-panel-head">
+        <div><p class="eyebrow">SIKKER TILGANG</p><h2>Logg inn som admin</h2></div>
+      </div>
+      <form id="loginForm" class="admin-form login-form">
+        <label>Brukernavn<input name="username" autocomplete="username" value="sebastian" required /></label>
+        <label>Passord<input name="password" type="password" autocomplete="current-password" required /></label>
+        <button id="loginBtn" class="primary" type="submit">Logg inn</button>
+      </form>
+      <p id="loginMessage" class="admin-message" role="status"></p>
+    </section>
+
+    <section id="adminPanel" class="hidden">
+      <div class="admin-grid">
+        <section class="admin-panel editor-panel">
+          <div class="admin-panel-head">
+            <div><p class="eyebrow">GLOBAL DEFAULT</p><h2 id="editorTitle">Legg til middag</h2></div>
+            <button id="cancelEditBtn" class="ghost hidden" type="button">Avbryt redigering</button>
+          </div>
+          <form id="mealForm" class="admin-form">
+            <input type="hidden" name="id" />
+            <div class="form-grid">
+              <label>Navn<input name="name" required maxlength="120" placeholder="f.eks. Kylling tikka masala" /></label>
+              <label>Kategori<input name="category" maxlength="50" list="adminCategorySuggestions" placeholder="f.eks. Kylling" /></label>
+            </div>
+            <datalist id="adminCategorySuggestions">
+              <option value="Kylling"><option value="Fisk"><option value="Kjøtt"><option value="Pasta"><option value="Pizza"><option value="Tex-mex"><option value="Vegetar"><option value="Annet">
+            </datalist>
+            <label>Tags <span class="label-help">kommaseparert, valgfritt</span><input name="tags" maxlength="300" placeholder="favoritt, rask, helg" /></label>
+            <label>Ingredienser <span class="label-help">én per linje: vare | mengde</span><textarea name="ingredients" rows="9" placeholder="kyllingfilet | 600 g&#10;ris | 1 pk&#10;matfløte | 1 beger"></textarea></label>
+            <label>Oppskriftslenke <span class="label-help">valgfritt</span><input name="url" type="url" inputmode="url" placeholder="https://…" /></label>
+            <div class="admin-form-actions">
+              <button id="saveMealBtn" class="primary" type="submit">Legg til som Default</button>
+            </div>
+          </form>
+          <p id="formMessage" class="admin-message" role="status"></p>
+        </section>
+
+        <section class="admin-panel list-panel">
+          <div class="admin-panel-head">
+            <div><p class="eyebrow">SENTRALT BIBLIOTEK</p><h2>Admin-lagte middager</h2></div>
+            <button id="refreshBtn" class="secondary" type="button">Oppdater</button>
+          </div>
+          <p class="admin-explainer">Listen under viser middager som ligger i D1 og kan endres her. De opprinnelige middagene i <code>meals.js</code> fortsetter å være tilgjengelige i tillegg.</p>
+          <div id="mealList" class="admin-meal-list"></div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    window.MATPLAN_API = 'https://matplanlegger-api.sebastian-be1.workers.dev';
+  </script>
+  <script src="./admin.js?v=1.13.0"></script>
+</body>
+</html>

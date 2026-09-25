@@ -55,7 +55,7 @@
     'DEFAULT + DERES EGNE': 'BUILT-IN + YOUR OWN',
     'Søk etter middag…': 'Search for a meal…',
     '+ Legg til middag': '+ Add meal',
-    'Default-middagene følger appen. Egne middager lagres kun i den aktive husholdningsprofilen og synkroniseres med de andre som bruker samme profil.': 'Built-in meals come with the app. Your own meals are stored only in the active household profile and sync with the others using the same profile.',
+    'Default-middagene administreres sentralt og gjelder alle profiler. Egne middager lagres kun i den aktive husholdningsprofilen og synkroniseres med de andre som bruker samme profil.': 'Default meals are managed centrally and are available to all profiles. Your own meals are stored only in the active household profile and sync with the others using the same profile.',
     'Tøm middagsbank': 'Clear meal library',
     'Gjenopprett standardmiddager': 'Restore built-in meals',
     'Kun egne middager': 'Custom meals only',

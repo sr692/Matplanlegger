@@ -21,6 +21,7 @@ const THEME_KEY = 'matplan_theme';
 
 let activeProfile = null;
 let state = defaultState(true);
+let globalDefaultMeals = [];
 let selectedDay = null;
 let filter = 'Alle';
 let syncTimer = null;
@@ -397,14 +398,40 @@ function escapeHtml(value) {
   return String(value).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 }
 
+function mergedDefaultMeals() {
+  const byId = new Map((Array.isArray(window.MEALS) ? window.MEALS : []).map(meal => [meal.id, meal]));
+  for (const meal of globalDefaultMeals) {
+    if (meal?.id) byId.set(meal.id, meal);
+  }
+  return [...byId.values()];
+}
+
+async function loadGlobalDefaultMeals() {
+  if (!API_BASE) {
+    globalDefaultMeals = [];
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API_BASE}/api/default-meals`, {cache:'no-store'});
+    if (!response.ok) throw new Error(`HTTP_${response.status}`);
+    const data = await response.json();
+    globalDefaultMeals = Array.isArray(data?.meals) ? data.meals.filter(meal => meal && meal.id && meal.name) : [];
+  } catch (error) {
+    // Backward compatible during deployment: built-in meals.js remains the fallback.
+    console.warn('Kunne ikke hente globale standardmiddager. Bruker innebygd middagsbank.', error);
+    globalDefaultMeals = [];
+  }
+}
+
 function allMeals() {
   const custom = (state.customMeals || []).map(m => ({...m, isCustom:true}));
-  const defaults = MEALS.map(m => ({...m, isCustom:false}));
+  const defaults = mergedDefaultMeals().map(m => ({...m, isCustom:false}));
   return [...custom, ...defaults];
 }
 
 function mealById(id) {
-  return (state.customMeals || []).find(m => m.id === id) || MEALS.find(m => m.id === id);
+  return (state.customMeals || []).find(m => m.id === id) || mergedDefaultMeals().find(m => m.id === id);
 }
 
 function safeExternalUrl(value) {
@@ -936,6 +963,7 @@ document.getElementById('joinProfileForm').onsubmit = async e => {
 
 async function bootstrap() {
   initTheme();
+  await loadGlobalDefaultMeals();
   const params = new URLSearchParams(location.search);
   const queryProfile = extractProfileId(params.get('profile'));
   const profiles = getProfiles();
