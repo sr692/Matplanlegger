@@ -63,7 +63,7 @@ html[data-theme="dark"]{
 }
 
 *{box-sizing:border-box}
-html{scroll-behavior:smooth}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{
   margin:0;
   min-height:100vh;
@@ -230,6 +230,9 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 .categorized-shopping .shopping-row.done{opacity:.42}.categorized-shopping .shopping-row.done .shopping-name{text-decoration:line-through}
 
 @media(max-width:760px){
+  /* v1.13.4: prevent iOS Safari focus-zoom on form controls.
+     Safari zooms focused controls when their computed font-size is below 16px. */
+  input:not([type="checkbox"]):not([type="radio"]),select,textarea{font-size:16px}
   .shopping-head .secondary{width:100%}
   .shopping-add-card{margin:12px -2px 14px;padding:13px;border-radius:13px}
   .shopping-add-title{align-items:flex-start}.shopping-add-title>span{display:none}
