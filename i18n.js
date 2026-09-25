@@ -51,6 +51,31 @@
     'Lås opp uka for å tømme planen': 'Unlock the week to clear the plan',
     'DET SOM MANGLER': 'WHAT IS MISSING',
     'Oppdater fra uke': 'Update from week',
+    'Handlelisten bygges automatisk fra valgte middager, sorteres etter butikkategori og trekker fra det dere allerede har registrert i fryseren.': 'The shopping list is built automatically from selected meals, sorted by store category and subtracts what you already have registered in the freezer.',
+    'EKSTRA VARER': 'EXTRA ITEMS',
+    'Legg til egen vare': 'Add your own item',
+    'Synkes med profilen': 'Syncs with the profile',
+    'Automatisk kategori': 'Automatic category',
+    '+ Legg til': '+ Add',
+    'Frukt og grønnsaker': 'Fruit & vegetables',
+    'Kjøtt, fisk': 'Meat & fish',
+    'Pålegg': 'Cold cuts & spreads',
+    'Kjeks': 'Biscuits',
+    'Syltetøy': 'Jam',
+    'Bakevarer': 'Bakery',
+    'Frysevarer': 'Frozen',
+    'Meieri': 'Dairy',
+    'Kaffe': 'Coffee',
+    'Hermetikk': 'Canned goods',
+    'Barn/baby': 'Kids / baby',
+    'Snacks': 'Snacks',
+    'Hygiene': 'Hygiene',
+    'Diverse': 'Other',
+    'Egen vare': 'Custom item',
+    'Handlelisten er tom': 'The shopping list is empty',
+    'Velg middager eller legg til egne varer.': 'Choose meals or add your own items.',
+    'Varen er lagt til': 'Item added',
+    'valgfritt': 'optional',
     'Handlelisten bygges automatisk fra valgte middager og trekker fra det dere allerede har registrert i fryseren.': 'The shopping list is built automatically from selected meals and subtracts what you already have registered in the freezer.',
     'DEFAULT + DERES EGNE': 'BUILT-IN + YOUR OWN',
     'Søk etter middag…': 'Search for a meal…',
@@ -363,6 +388,8 @@
       return `Remove ${m[1]} from ${DAYS[m[2]]}`;
     }
     if ((m = core.match(/^Til (.+)$/))) return `For ${m[1]}`;
+    if ((m = core.match(/^(\d+) igjen$/))) return `${m[1]} left`;
+    if ((m = core.match(/^(\d+) handlet · (\d+) totalt$/))) return `${m[1]} bought · ${m[2]} total`;
 
     // Strings such as "Kylling · Egen · favoritt".
     if (core.includes(' · ')) {

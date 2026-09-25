@@ -72,6 +72,7 @@ function defaultState(withSeed = false) {
     week: withSeed ? structuredClone(seedWeek) : {},
     freezer: withSeed ? structuredClone(seedFreezer) : [],
     shoppingDone: {},
+    shoppingCustom: [],
     history: {},
     customMeals: [],
     weekLocked: false
@@ -83,6 +84,7 @@ function ensureStateShape(value) {
     week: value?.week && typeof value.week === 'object' ? value.week : {},
     freezer: Array.isArray(value?.freezer) ? value.freezer : [],
     shoppingDone: value?.shoppingDone && typeof value.shoppingDone === 'object' ? value.shoppingDone : {},
+    shoppingCustom: Array.isArray(value?.shoppingCustom) ? value.shoppingCustom : [],
     history: value?.history && typeof value.history === 'object' ? value.history : {},
     customMeals: Array.isArray(value?.customMeals) ? value.customMeals : [],
     weekLocked: value?.weekLocked === true
@@ -837,6 +839,65 @@ function freezerCovers(item) {
   return state.freezer.some(f => norm(f.name).includes(n) || n.includes(norm(f.name)));
 }
 
+const SHOPPING_CATEGORIES = [
+  'Frukt og grønnsaker',
+  'Kjøtt, fisk',
+  'Pålegg',
+  'Kjeks',
+  'Syltetøy',
+  'Bakevarer',
+  'Frysevarer',
+  'Meieri',
+  'Kaffe',
+  'Hermetikk',
+  'Barn/baby',
+  'Snacks',
+  'Hygiene',
+  'Diverse'
+];
+
+const SHOPPING_CATEGORY_ICONS = {
+  'Frukt og grønnsaker':'🥦',
+  'Kjøtt, fisk':'🥩',
+  'Pålegg':'🥪',
+  'Kjeks':'🍪',
+  'Syltetøy':'🍓',
+  'Bakevarer':'🥖',
+  'Frysevarer':'❄️',
+  'Meieri':'🥛',
+  'Kaffe':'☕',
+  'Hermetikk':'🥫',
+  'Barn/baby':'🍼',
+  'Snacks':'🍿',
+  'Hygiene':'🧴',
+  'Diverse':'🛒'
+};
+
+const SHOPPING_CATEGORY_RULES = [
+  ['Barn/baby', ['bleie','bleier','våtserviett','babymat','barnemat','babygrøt','morsmelkerstatning','smokk','babydrikk','smoothiepose']],
+  ['Hygiene', ['tannkrem','tannbørste','munnskyll','såpe','håndsåpe','sjampo','shampoo','balsam','deodorant','toalettpapir','dopapir','tørkepapir','tørkerull','barber','bind','tampong','vaskemiddel','oppvaskmiddel','søppelpose']],
+  ['Kaffe', ['kaffe','espresso','kaffebønne','kaffefilter','kaffekapsel','nespresso']],
+  ['Syltetøy', ['syltetøy','marmelade','bringebærsyltetøy','jordbærsyltetøy']],
+  ['Kjeks', ['kjeks','cracker','crackers','digestive','bixit','oreo']],
+  ['Frysevarer', ['frossen','frosne','fries','pommes','iskrem','fiskepinner','frossenpizza']],
+  ['Snacks', ['nachochips','potetgull','chips','sjokolade','godteri','popcorn','nøtter','snacks','dipmix']],
+  ['Pålegg', ['kokt skinke','spekeskinke','skinke','salami','leverpostei','pålegg','pepperoni','servelat','makrell i tomat']],
+  ['Meieri', ['melk','fløte','rømme','yoghurt','ost','mozzarella','parmesan','cheddar','smør','cottage cheese','kremost','creme fraiche','crème fraîche','egg']],
+  ['Kjøtt, fisk', ['kylling','kjøttdeig','karbonadedeig','svine','biff','burgerkjøtt','hval','laks','salma','torsk','fisk','scampi','reker','bacon','chorizo','kjøtt','kalkun','pølse','entrecote','indrefilet']],
+  ['Hermetikk', ['hakkede tomater','soltørkede tomater','tomatpuré','passata','kidneybønner','bønner','mais','kokosmelk','tunfisk','pizzasaus','enchiladasaus','woksaus','bbq saus','bbq-saus','soyasaus','salsa','hermetikk']],
+  ['Bakevarer', ['pizzamel','gjær','mel','brød','libabrød','pitabrød','burgerbrød','naan','wrap','tortillalefse','lompe','pinsa','baguette','rundstykke','bolle']],
+  ['Diverse', ['paprikapulver','garam masala','tacokrydder']],
+  ['Frukt og grønnsaker', ['tomat','agurk','paprika','løk','hvitløk','gulrot','brokkoli','salat','ruccola','spinat','avokado','mango','lime','sitron','potet','søtpotet','asparges','ingefær','koriander','eple','banan','appelsin','pære','drue','jordbær','blåbær','bringebær','bær','melon','chili','purre','selleri','blomkål','squash','aubergine','sopp','champignon','kål','vårløk']]
+];
+
+function classifyShoppingCategory(name) {
+  const value = norm(name);
+  for (const [category, words] of SHOPPING_CATEGORY_RULES) {
+    if (words.some(word => value.includes(norm(word)))) return category;
+  }
+  return 'Diverse';
+}
+
 function buildShopping() {
   const map = new Map();
   Object.values(state.week).filter(Boolean).map(mealById).filter(Boolean).forEach(m => m.ingredients.forEach(([name,qty]) => {
@@ -845,26 +906,110 @@ function buildShopping() {
     map.get(key).qtys.push(qty);
     map.get(key).meals.push(m.name);
   }));
-  return [...map.values()].filter(x => !freezerCovers(x.name)).sort((a,b) => a.name.localeCompare(b.name,'nb'));
+  return [...map.values()]
+    .filter(x => !freezerCovers(x.name))
+    .map(x => ({...x, key:norm(x.name), category:classifyShoppingCategory(x.name), source:'meal'}));
+}
+
+function manualShoppingItems() {
+  return state.shoppingCustom.map(item => ({
+    ...item,
+    key:`manual:${item.id}`,
+    category:SHOPPING_CATEGORIES.includes(item.category) ? item.category : classifyShoppingCategory(item.name),
+    source:'manual',
+    qtys:item.qty ? [item.qty] : [],
+    meals:[]
+  }));
+}
+
+function shoppingRowHtml(item) {
+  const done = !!state.shoppingDone[item.key];
+  const qty = item.qtys.filter(Boolean).map(escapeHtml).join(' + ');
+  const subtitle = item.source === 'manual'
+    ? 'Egen vare'
+    : `Til ${[...new Set(item.meals)].map(escapeHtml).join(', ')}`;
+  const remove = item.source === 'manual'
+    ? `<button class="shopping-remove" type="button" data-remove-shopping="${escapeHtml(item.id)}" aria-label="Fjern ${escapeHtml(item.name)}">×</button>`
+    : '';
+
+  return `<div class="shopping-row ${done?'done':''} ${item.source === 'manual' ? 'manual-shopping-row' : ''}">
+    <input type="checkbox" data-shopping-check="${escapeHtml(item.key)}" aria-label="${escapeHtml(item.name)}" ${done?'checked':''}>
+    <div class="shopping-item-copy"><div class="shopping-name">${escapeHtml(item.name)}</div><div class="shopping-sub">${subtitle}</div></div>
+    <div class="shopping-row-tail">${qty ? `<div class="qty">${qty}</div>` : ''}${remove}</div>
+  </div>`;
 }
 
 function renderShopping() {
-  const items = buildShopping();
+  const automaticItems = buildShopping();
+  const manualItems = manualShoppingItems();
+  const items = [...automaticItems, ...manualItems];
   const el = document.getElementById('shoppingList');
+  const progress = document.getElementById('shoppingProgress');
+  if (!el) return;
+
+  const doneCount = items.filter(item => state.shoppingDone[item.key]).length;
+  const remaining = Math.max(0, items.length - doneCount);
+  if (progress) progress.innerHTML = items.length
+    ? `<strong>${remaining} igjen</strong><span>${doneCount} handlet · ${items.length} totalt</span>`
+    : '<strong>Handlelisten er tom</strong><span>Velg middager eller legg til egne varer.</span>';
+
   if (!items.length) {
     el.innerHTML = '<div class="empty">Ingen varer å handle fra planlagte middager.</div>';
     return;
   }
-  el.innerHTML = items.map(x => {
-    const key = norm(x.name);
-    const done = !!state.shoppingDone[key];
-    return `<label class="shopping-row ${done?'done':''}"><input type="checkbox" data-key="${escapeHtml(key)}" ${done?'checked':''}><div><div class="shopping-name">${escapeHtml(x.name)}</div><div class="shopping-sub">Til ${[...new Set(x.meals)].map(escapeHtml).join(', ')}</div></div><div class="qty">${x.qtys.map(escapeHtml).join(' + ')}</div></label>`;
+
+  const grouped = new Map(SHOPPING_CATEGORIES.map(category => [category, []]));
+  items.forEach(item => grouped.get(item.category || 'Diverse').push(item));
+
+  el.innerHTML = SHOPPING_CATEGORIES.map(category => {
+    const categoryItems = grouped.get(category) || [];
+    if (!categoryItems.length) return '';
+    categoryItems.sort((a,b) => {
+      const ad = state.shoppingDone[a.key] ? 1 : 0;
+      const bd = state.shoppingDone[b.key] ? 1 : 0;
+      return ad - bd || a.name.localeCompare(b.name,'nb');
+    });
+    const categoryDone = categoryItems.filter(item => state.shoppingDone[item.key]).length;
+    const left = categoryItems.length - categoryDone;
+    return `<section class="shopping-category" data-category="${escapeHtml(category)}">
+      <div class="shopping-category-head"><div class="shopping-category-title"><span class="shopping-category-icon" aria-hidden="true">${SHOPPING_CATEGORY_ICONS[category] || '🛒'}</span><h3>${escapeHtml(category)}</h3></div><span class="shopping-category-count">${left} igjen</span></div>
+      <div class="shopping-category-items">${categoryItems.map(shoppingRowHtml).join('')}</div>
+    </section>`;
   }).join('');
-  el.querySelectorAll('input[type=checkbox]').forEach(c => c.onchange = () => {
-    state.shoppingDone[c.dataset.key] = c.checked;
+
+  el.querySelectorAll('[data-shopping-check]').forEach(checkbox => checkbox.onchange = () => {
+    state.shoppingDone[checkbox.dataset.shoppingCheck] = checkbox.checked;
     save();
     renderShopping();
   });
+  el.querySelectorAll('[data-remove-shopping]').forEach(button => button.onclick = () => {
+    const id = button.dataset.removeShopping;
+    state.shoppingCustom = state.shoppingCustom.filter(item => item.id !== id);
+    delete state.shoppingDone[`manual:${id}`];
+    save();
+    renderShopping();
+  });
+}
+
+function addManualShoppingItem(form) {
+  const fd = new FormData(form);
+  const name = String(fd.get('name') || '').trim();
+  if (!name) return;
+  const qty = String(fd.get('qty') || '').trim();
+  const selectedCategory = String(fd.get('category') || '').trim();
+  const category = SHOPPING_CATEGORIES.includes(selectedCategory) ? selectedCategory : classifyShoppingCategory(name);
+  state.shoppingCustom.push({
+    id:crypto.randomUUID(),
+    name:name.slice(0,100),
+    qty:qty.slice(0,60),
+    category,
+    createdAt:new Date().toISOString()
+  });
+  save();
+  form.reset();
+  renderShopping();
+  form.elements.name?.focus();
+  toast('Varen er lagt til');
 }
 
 function renderFreezer() {
@@ -921,6 +1066,11 @@ document.getElementById('autoPlanBtn').onclick = () => {
 };
 
 document.getElementById('regenShoppingBtn').onclick = renderShopping;
+const shoppingAddForm = document.getElementById('shoppingAddForm');
+if (shoppingAddForm) shoppingAddForm.onsubmit = event => {
+  event.preventDefault();
+  addManualShoppingItem(event.currentTarget);
+};
 document.getElementById('syncBtn').onclick = async () => {
   if (!activeProfile) { openProfileDialog(); return; }
   await pushProfile(true);
