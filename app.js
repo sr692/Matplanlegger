@@ -550,6 +550,17 @@ function clearDropTargets() {
   document.querySelectorAll('.day-card.drop-target').forEach(x => x.classList.remove('drop-target'));
 }
 
+function removeMealFromDay(day) {
+  if (isWeekLocked()) { toast('Uka er låst'); return; }
+  if (!day || !state.week[day]) return;
+
+  delete state.week[day];
+  save();
+  renderWeek();
+  if (document.getElementById('shoppingView')?.classList.contains('active')) renderShopping();
+  toast('Middagen er fjernet fra planen');
+}
+
 function beginPointerDrag(e, day, card, meal) {
   if (isWeekLocked() || !meal || e.button > 0) return;
   e.stopPropagation();
@@ -624,7 +635,7 @@ function renderWeek() {
     c.setAttribute('aria-label', locked
       ? `${day}: ${meal ? meal.name : 'ingen middag'}. Uka er låst.`
       : (meal ? `${day}: ${meal.name}. Dra for å flytte eller klikk for å endre.` : `${day}: ingen middag. Klikk for å velge.`));
-    c.innerHTML = `<div class="day-top"><div class="day-name">${day}</div>${meal && !locked ? `<button class="drag-handle" type="button" aria-label="Dra ${escapeHtml(meal.name)} fra ${day}" title="Dra til en annen dag">⠿</button>` : (locked ? '<span class="day-lock" aria-hidden="true">&#128274;</span>' : '')}</div>${meal ? `<div class="day-meal">${escapeHtml(meal.name)}</div><div class="day-meta">${escapeHtml(meal.category)}</div><div class="day-tags">${(meal.tags || []).map(t=>`<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>` : `<div class="day-empty">${locked ? 'Ingen middag' : '+ Velg middag'}</div>`}`;
+    c.innerHTML = `<div class="day-top"><div class="day-name">${day}</div>${meal && !locked ? `<button class="drag-handle" type="button" aria-label="Dra ${escapeHtml(meal.name)} fra ${day}" title="Dra til en annen dag">⠿</button>` : (locked ? '<span class="day-lock" aria-hidden="true">&#128274;</span>' : '')}</div>${meal ? `<div class="day-meal">${escapeHtml(meal.name)}</div><div class="day-meta">${escapeHtml(meal.category)}</div><div class="day-tags">${(meal.tags || []).map(t=>`<span class="tag">${escapeHtml(t)}</span>`).join('')}</div><div class="day-card-actions">${!locked ? `<button class="week-remove-btn" type="button" aria-label="Fjern ${escapeHtml(meal.name)} fra ${day}" title="Fjern middag">Fjern</button>` : ''}</div>` : `<div class="day-empty">${locked ? 'Ingen middag' : '+ Velg middag'}</div>`}`;
 
     c.onclick = e => {
       if (e.target.closest('.drag-handle')) return;
@@ -661,6 +672,15 @@ function renderWeek() {
       c.classList.remove('dragging');
       if (fromDay && fromDay !== day) moveMealBetweenDays(fromDay, day);
     });
+
+    const removeButton = c.querySelector('.week-remove-btn');
+    if (removeButton) {
+      removeButton.addEventListener('click', e => {
+        e.stopPropagation();
+        removeMealFromDay(day);
+      });
+      removeButton.addEventListener('pointerdown', e => e.stopPropagation());
+    }
 
     // Pointer-based drag handle also works on touch screens.
     const handle = c.querySelector('.drag-handle');

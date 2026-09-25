@@ -204,6 +204,10 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 .day-empty{margin:auto 0;color:var(--muted-2);font-size:13px;font-weight:650}
 .day-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:auto;padding-top:16px}
 .tag{font-size:9px;padding:4px 7px;border-radius:999px;background:color-mix(in srgb,var(--day-accent) 9%,var(--surface));color:color-mix(in srgb,var(--day-accent) 76%,var(--ink));font-weight:750;border:1px solid color-mix(in srgb,var(--day-accent) 18%,var(--line))}
+.day-card-actions{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:10px;min-height:30px}
+.week-remove-btn{display:inline-flex;align-items:center;justify-content:center;width:max-content;max-width:100%;padding:.52rem .7rem;border:1px solid color-mix(in srgb,var(--danger,#b34b46) 28%,var(--line));border-radius:999px;background:color-mix(in srgb,var(--danger,#b34b46) 7%,var(--surface));color:color-mix(in srgb,var(--danger,#b34b46) 78%,var(--ink));font-size:.75rem;font-weight:800;line-height:1;cursor:pointer;transition:transform .16s ease,border-color .16s ease,background .16s ease}
+.week-remove-btn:hover{transform:translateY(-1px);border-color:color-mix(in srgb,var(--danger,#b34b46) 55%,var(--line));background:color-mix(in srgb,var(--danger,#b34b46) 12%,var(--surface))}
+.week-remove-btn:focus-visible{outline:2px solid currentColor;outline-offset:2px}
 .drag-float{position:fixed;left:0;top:0;z-index:1000;pointer-events:none;width:min(220px,52vw);background:var(--surface-raised);border:1px solid var(--line-strong);border-radius:14px;padding:13px 14px;box-shadow:var(--shadow-lg);transform:rotate(1.2deg);opacity:.97}
 .drag-float small{display:block;color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.12em;font-weight:800;margin-bottom:5px}.drag-float strong{font-size:14px;line-height:1.3}
 

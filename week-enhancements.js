@@ -107,7 +107,8 @@
     action.addEventListener('click', event => event.stopPropagation());
     action.addEventListener('pointerdown', event => event.stopPropagation());
 
-    card.appendChild(action);
+    const actions = card.querySelector('.day-card-actions');
+    (actions || card).appendChild(action);
   }
 
   function enhanceWeekCards() {
@@ -124,10 +125,10 @@
     style.textContent = `
       .week-display-btn{display:inline-flex;align-items:center;justify-content:center;gap:.42rem;white-space:nowrap}
       .week-display-icon{font-size:1rem;line-height:1}
-      .week-recipe-btn{display:inline-flex;align-items:center;justify-content:center;width:max-content;max-width:100%;margin-top:auto;padding:.52rem .7rem;border:1px solid var(--line,#d9d5ca);border-radius:999px;background:color-mix(in srgb,var(--surface,#fff) 88%,transparent);color:inherit;text-decoration:none;font-size:.75rem;font-weight:800;line-height:1;transition:transform .16s ease,border-color .16s ease,background .16s ease}
+      .week-recipe-btn{display:inline-flex;align-items:center;justify-content:center;width:max-content;max-width:100%;margin-top:0;padding:.52rem .7rem;border:1px solid var(--line,#d9d5ca);border-radius:999px;background:color-mix(in srgb,var(--surface,#fff) 88%,transparent);color:inherit;text-decoration:none;font-size:.75rem;font-weight:800;line-height:1;transition:transform .16s ease,border-color .16s ease,background .16s ease}
       .week-recipe-btn:hover{transform:translateY(-1px);border-color:currentColor}
       .week-recipe-btn:focus-visible{outline:2px solid currentColor;outline-offset:2px}
-      .day-card:has(.week-recipe-btn) .day-tags{margin-bottom:.65rem}
+      .day-card:has(.week-recipe-btn) .day-tags{margin-bottom:0}
       .week-today-badge{display:inline-flex;align-items:center;justify-content:center;margin-left:auto;padding:.28rem .55rem;border-radius:999px;background:color-mix(in srgb,var(--accent,#c08b43) 16%,white);color:var(--text,#2e2a24);font-size:.68rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;border:1px solid color-mix(in srgb,var(--accent,#c08b43) 30%,transparent)}
       #weekGrid .day-card.is-today:not(.drop-target){border-color:color-mix(in srgb,var(--accent,#c08b43) 42%, var(--line,#d9d5ca));box-shadow:0 10px 24px rgba(0,0,0,.08)}
 
@@ -158,7 +159,7 @@
       body.${PRESENTATION_CLASS} #weekGrid .day-meta{font-size:clamp(.74rem,.82vw,.84rem)}
       body.${PRESENTATION_CLASS} #weekGrid .day-tags{display:flex;flex-wrap:wrap;gap:6px;min-height:28px;overflow:hidden}
       body.${PRESENTATION_CLASS} #weekGrid .tag{font-size:clamp(.62rem,.72vw,.74rem)}
-      body.${PRESENTATION_CLASS} #weekGrid .week-recipe-btn{margin-top:auto;font-size:clamp(.7rem,.78vw,.8rem)}
+      body.${PRESENTATION_CLASS} #weekGrid .week-recipe-btn{margin-top:0;font-size:clamp(.7rem,.78vw,.8rem)}
       body.${PRESENTATION_CLASS} #weekGrid .day-empty{font-size:clamp(.9rem,1vw,1rem);margin-top:clamp(14px,2vw,22px)}
       body.${PRESENTATION_CLASS} #weekGrid .day-lock,
       body.${PRESENTATION_CLASS} #weekGrid .drag-handle{display:none!important}

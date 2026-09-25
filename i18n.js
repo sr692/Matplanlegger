@@ -145,6 +145,8 @@
     'Middagen er lagt til': 'The meal was added',
     'Ingen varer å handle fra planlagte middager.': 'No shopping items from planned meals.',
     'Fjern': 'Remove',
+    'Fjern middag': 'Remove dinner',
+    'Middagen er fjernet fra planen': 'The dinner was removed from the plan',
     'Fryseren er tom.': 'The freezer is empty.',
     'Profilen er synkronisert': 'The profile is synced',
     'Kunne ikke synkronisere profilen. Endringene er fortsatt lagret på denne enheten.': 'Could not sync the profile. Your changes are still saved on this device.',
@@ -356,6 +358,9 @@
     }
     if ((m = core.match(/^Dra (.+) fra (Mandag|Tirsdag|Onsdag|Torsdag|Fredag|Lørdag|Søndag)$/))) {
       return `Drag ${m[1]} from ${DAYS[m[2]]}`;
+    }
+    if ((m = core.match(/^Fjern (.+) fra (Mandag|Tirsdag|Onsdag|Torsdag|Fredag|Lørdag|Søndag)$/))) {
+      return `Remove ${m[1]} from ${DAYS[m[2]]}`;
     }
     if ((m = core.match(/^Til (.+)$/))) return `For ${m[1]}`;
 
