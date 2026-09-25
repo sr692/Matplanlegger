@@ -21,7 +21,7 @@ const THEME_KEY = 'matplan_theme';
 
 let activeProfile = null;
 let state = defaultState(true);
-let globalDefaultMeals = [];
+let globalDefaultMeals = null;
 let selectedDay = null;
 let filter = 'Alle';
 let syncTimer = null;
@@ -399,16 +399,15 @@ function escapeHtml(value) {
 }
 
 function mergedDefaultMeals() {
-  const byId = new Map((Array.isArray(window.MEALS) ? window.MEALS : []).map(meal => [meal.id, meal]));
-  for (const meal of globalDefaultMeals) {
-    if (meal?.id) byId.set(meal.id, meal);
-  }
-  return [...byId.values()];
+  // D1 is authoritative once the API has loaded successfully. meals.js is only
+  // an offline/deployment fallback, so admin edits and deletes apply globally.
+  if (Array.isArray(globalDefaultMeals)) return globalDefaultMeals;
+  return Array.isArray(window.MEALS) ? window.MEALS : [];
 }
 
 async function loadGlobalDefaultMeals() {
   if (!API_BASE) {
-    globalDefaultMeals = [];
+    globalDefaultMeals = null;
     return;
   }
 
@@ -420,7 +419,7 @@ async function loadGlobalDefaultMeals() {
   } catch (error) {
     // Backward compatible during deployment: built-in meals.js remains the fallback.
     console.warn('Kunne ikke hente globale standardmiddager. Bruker innebygd middagsbank.', error);
-    globalDefaultMeals = [];
+    globalDefaultMeals = null;
   }
 }
 
