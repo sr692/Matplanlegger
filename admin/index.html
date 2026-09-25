@@ -15,8 +15,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../styles.css?v=1.13.0" />
-  <link rel="stylesheet" href="./admin.css?v=1.13.0" />
+  <link rel="stylesheet" href="../styles.css?v=1.13.1" />
+  <link rel="stylesheet" href="./admin.css?v=1.13.1" />
 </head>
 <body>
   <header class="topbar admin-topbar">
@@ -35,7 +35,7 @@
       <div class="hero-copy">
         <p class="eyebrow">ADMIN</p>
         <h1>Standardmiddager for alle profiler</h1>
-        <p class="lead">Middager du legger til her blir en del av Default-banken for alle husholdningsprofiler. Profilenes egne middager endres ikke.</p>
+        <p class="lead">Her kan du redigere dagens Default-middager og legge til nye. Endringene gjelder alle husholdningsprofiler, mens profilenes egne middager ikke endres.</p>
       </div>
       <a class="secondary admin-back" href="../">Til Matplanlegger</a>
     </section>
@@ -80,10 +80,12 @@
 
         <section class="admin-panel list-panel">
           <div class="admin-panel-head">
-            <div><p class="eyebrow">SENTRALT BIBLIOTEK</p><h2>Admin-lagte middager</h2></div>
+            <div><p class="eyebrow">SENTRALT BIBLIOTEK</p><h2>Alle Default-middager</h2></div>
             <button id="refreshBtn" class="secondary" type="button">Oppdater</button>
           </div>
-          <p class="admin-explainer">Listen under viser middager som ligger i D1 og kan endres her. De opprinnelige middagene i <code>meals.js</code> fortsetter å være tilgjengelige i tillegg.</p>
+          <p class="admin-explainer">Dette er den sentrale Default-banken i D1. De eksisterende standardmiddagene er importert hit og kan redigeres eller slettes på samme måte som nye middager.</p>
+          <label class="admin-search-label" for="mealSearch">Finn middag</label>
+          <input id="mealSearch" class="admin-search" type="search" placeholder="Søk på navn, kategori eller tag…" autocomplete="off" />
           <div id="mealList" class="admin-meal-list"></div>
         </section>
       </div>
@@ -93,6 +95,6 @@
   <script>
     window.MATPLAN_API = 'https://matplanlegger-api.sebastian-be1.workers.dev';
   </script>
-  <script src="./admin.js?v=1.13.0"></script>
+  <script src="./admin.js?v=1.13.1"></script>
 </body>
 </html>

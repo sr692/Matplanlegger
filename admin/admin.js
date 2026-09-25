@@ -6,6 +6,7 @@ const USER_KEY = 'matplan-admin-user-v1';
 
 const $ = id => document.getElementById(id);
 let meals = [];
+let mealSearch = '';
 
 function setMessage(element, message = '', type = '') {
   element.textContent = message;
@@ -176,14 +177,19 @@ function mealCard(meal) {
 function renderMeals() {
   const host = $('mealList');
   host.replaceChildren();
-  if (!meals.length) {
+  const query = mealSearch.trim().toLocaleLowerCase('no-NO');
+  const visibleMeals = query
+    ? meals.filter(meal => [meal.name, meal.category, ...(meal.tags || [])].join(' ').toLocaleLowerCase('no-NO').includes(query))
+    : meals;
+
+  if (!visibleMeals.length) {
     const empty = document.createElement('div');
     empty.className = 'admin-empty';
-    empty.textContent = 'Ingen admin-lagte standardmiddager ennå.';
+    empty.textContent = meals.length ? 'Ingen Default-middager matcher søket.' : 'Ingen Default-middager finnes i D1 ennå.';
     host.appendChild(empty);
     return;
   }
-  for (const meal of meals) host.appendChild(mealCard(meal));
+  for (const meal of visibleMeals) host.appendChild(mealCard(meal));
 }
 
 async function loadMeals() {
@@ -271,6 +277,10 @@ $('mealForm').addEventListener('submit', async event => {
 
 $('cancelEditBtn').addEventListener('click', resetEditor);
 $('refreshBtn').addEventListener('click', () => loadMeals().catch(() => {}));
+$('mealSearch').addEventListener('input', event => {
+  mealSearch = event.currentTarget.value || '';
+  renderMeals();
+});
 $('logoutBtn').addEventListener('click', () => {
   showLogin();
   $('loginForm').elements.password.value = '';

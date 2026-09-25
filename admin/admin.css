@@ -19,6 +19,8 @@
 .admin-message.success{color:#397450}
 .admin-explainer{margin:-4px 0 18px;color:var(--muted);font-size:.85rem;line-height:1.55}
 .admin-explainer code{font:inherit;font-weight:800;color:var(--text)}
+.admin-search-label{display:block;margin:0 0 7px;font-size:.74rem;font-weight:800;color:var(--muted)}
+.admin-search{width:100%;box-sizing:border-box;margin:0 0 16px}
 .admin-meal-list{display:grid;gap:12px}
 .admin-meal-card{border:1px solid var(--line);border-radius:18px;padding:16px;background:color-mix(in srgb,var(--surface) 94%,var(--accent) 6%);display:grid;gap:10px}
 .admin-meal-card-head{display:flex;gap:12px;align-items:flex-start;justify-content:space-between}
