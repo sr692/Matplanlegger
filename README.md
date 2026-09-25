@@ -30,10 +30,6 @@ Appen samler ukeplan, middagsbank, handleliste og fryseroversikt i én profilbas
 
 ### Admin
 
-Admin finnes på:
-
-`https://mat.rusti.no/admin/`
-
 Admin kan:
 
 - se alle eksisterende Default-middager
@@ -42,17 +38,6 @@ Admin kan:
 - slette Default-middager
 
 Endringer lagres i D1 og gjelder alle profiler.
-
-Adminpassord ligger **ikke** i frontend eller GitHub. Følgende Cloudflare Secrets brukes:
-
-```powershell
-npx wrangler secret put ADMIN_PASSWORD
-npx wrangler secret put ADMIN_SESSION_SECRET
-```
-
-Standard adminbruker konfigureres med `ADMIN_USERNAME` i `wrangler.toml`. Eksempelfilen bruker `sebastian`.
-
-Admin-sessionen signeres av Worker og varer i opptil 12 timer.
 
 ### Handleliste
 
@@ -175,77 +160,6 @@ Eksempel:
 binding = "DB"
 database_name = "matplanlegger"
 database_id = "DIN-DATABASE-ID"
-```
-
-### Databaseoppsett
-
-For en ny database kan `schema.sql` brukes som grunnlag.
-
-Ved oppgradering fra en eldre Matplanlegger-versjon kjøres migreringene i rekkefølge:
-
-```powershell
-npx wrangler d1 execute matplanlegger --remote --file=migration-v1.13.0.sql
-npx wrangler d1 execute matplanlegger --remote --file=migration-v1.13.1.sql
-```
-
-`migration-v1.13.1.sql` importerer de eksisterende Default-middagene til D1 med de samme ID-ene, slik at eksisterende ukeplaner fortsatt peker på riktig middag.
-
-## Worker-konfigurasjon
-
-Eksempel på relevante innstillinger:
-
-```toml
-name = "matplanlegger-api"
-main = "worker.js"
-compatibility_date = "2026-09-25"
-
-[vars]
-ALLOWED_ORIGIN = "https://mat.rusti.no"
-ADMIN_USERNAME = "sebastian"
-```
-
-Sett secrets separat:
-
-```powershell
-npx wrangler secret put ADMIN_PASSWORD
-npx wrangler secret put ADMIN_SESSION_SECRET
-```
-
-Deploy Worker:
-
-```powershell
-npx wrangler deploy
-```
-
-## Filplassering ved deploy
-
-### GitHub Pages
-
-Disse er frontend og kan ligge i repoet som publiserer `mat.rusti.no`:
-
-```text
-index.html
-app.js
-styles.css
-i18n.js
-meals.js
-meal-library-mode.js
-recipe-links.js
-week-enhancements.js
-CNAME
-admin/
-```
-
-### Cloudflare Worker
-
-Disse er backendfiler og skal ikke publiseres som frontend:
-
-```text
-worker.js
-schema.sql
-migration-v1.13.0.sql
-migration-v1.13.1.sql
-wrangler.toml
 ```
 
 ## Versjonshistorikk
